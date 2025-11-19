@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi Keuangan Pribadi - Dark Star</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Poppins, sans-serif;
+        background: #0a0a0f;
+        color: white;
+        overflow-x: hidden;
+    }
+
+    h1 {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 32px;
+        text-shadow: 0 0 15px #b400ff;
+        animation: glowText 2s infinite alternate;
+    }
+
+    @keyframes glowText {
+        from { text-shadow: 0 0 10px #ff00dd; }
+        to   { text-shadow: 0 0 25px #ff44dd; }
+    }
+
+    .container {
+        width: 90%;
+        max-width: 700px;
+        margin: auto;
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px #7700ff;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 10px;
+        border: none;
+        font-size: 16px;
+        background: #1d1d27;
+        color: white;
+        box-shadow: 0 0 10px #5500ff;
+    }
+
+    button {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(45deg, #6a00ff, #c200ff);
+        color: white;
+        font-size: 15px;
+        cursor: pointer;
+        box-shadow: 0 0 10px #9400ff;
+    }
+
+    button:hover {
+        transform: scale(1.05);
+    }
+
+    table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 12px;
+        background: rgba(255,255,255,0.06);
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        text-align: center;
+    }
+
+    th {
+        background: rgba(255,255,255,0.12);
+    }
+
+    /* Bintang jatuh */
+    .star {
+        position: fixed;
+        width: 3px;
+        height: 30px;
+        background: white;
+        border-radius: 50%;
+        opacity: 0.8;
+        animation: fall 1.5s linear infinite;
+    }
+
+    @keyframes fall {
+        0% { transform: translateY(-100vh) translateX(0); opacity: 1; }
+        100% { transform: translateY(100vh) translateX(50px); opacity: 0; }
+    }
+</style>
+</head>
+<body>
+
+<h1>✨ Keuangan Pribadi ✨</h1>
+
+<div class="container">
+    <h2>Tambah Transaksi</h2>
+
+    <select id="jenis">
+        <option value="pemasukan">Pemasukan</option>
+        <option value="pengeluaran">Pengeluaran</option>
+    </select>
+
+    <input type="number" id="jumlah" placeholder="Masukkan jumlah">
+    <input type="text" id="keterangan" placeholder="Keterangan">
+    <input type="date" id="tanggal">
+
+    <button onclick="tambahData()" style="width:100%; margin-top:10px;">Simpan</button>
+
+    <h2 style="margin-top:30px;">Saldo Saat Ini</h2>
+    <h1 id="saldo">Rp 0</h1>
+
+    <h2>Histori Transaksi</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Jenis</th>
+                <th>Jumlah</th>
+                <th>Keterangan</th>
+                <th>Tanggal</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody id="tabel"></tbody>
+    </table>
+</div>
+
+<script>
+let data = [];
+let saldo = 0;
+
+function updateSaldo() {
+    document.getElementById("saldo").innerText = "Rp " + saldo.toLocaleString();
+}
+
+function tampilkanTabel() {
+    let tabel = document.getElementById("tabel");
+    tabel.innerHTML = "";
+
+    data.forEach((item, index) => {
+        let tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${item.jenis}</td>
+            <td>Rp ${item.jumlah.toLocaleString()}</td>
+            <td>${item.keterangan}</td>
+            <td>${item.tanggal}</td>
+            <td><button onclick="hapusData(${index})">Hapus</button></td>
+        `;
+
+        tabel.appendChild(tr);
+    });
+}
+
+function tambahData() {
+    let jenis = document.getElementById("jenis").value;
+    let jumlah = parseInt(document.getElementById("jumlah").value);
+    let keterangan = document.getElementById("keterangan").value;
+    let tanggal = document.getElementById("tanggal").value;
+
+    if (!jumlah || !tanggal) {
+        alert("Isi jumlah & tanggal!");
+        return;
+    }
+
+    data.push({ jenis, jumlah, keterangan, tanggal });
+
+    if (jenis == "pemasukan") saldo += jumlah;
+    else saldo -= jumlah;
+
+    updateSaldo();
+    tampilkanTabel();
+
+    document.getElementById("jumlah").value = "";
+    document.getElementById("keterangan").value = "";
+}
+
+function hapusData(index) {
+    let item = data[index];
+
+    if (item.jenis == "pemasukan") saldo -= item.jumlah;
+    else saldo += item.jumlah;
+
+    data.splice(index, 1);
+
+    updateSaldo();
+    tampilkanTabel();
+}
+
+function buatBintang() {
+    const star = document.createElement("div");
+    star.classList.add("star");
+    star.style.left = Math.random() * window.innerWidth + "px";
+    star.style.animationDuration = (1 + Math.random() * 2) + "s";
+    document.body.appendChild(star);
+
+    setTimeout(() => star.remove(), 3000);
+}
+
+setInterval(buatBintang, 200);
+</script>
+
+</body>
+</html>
