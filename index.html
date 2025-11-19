@@ -60,7 +60,6 @@
         font-size: 15px;
         cursor: pointer;
         box-shadow: 0 0 10px #9400ff;
-        margin-top: 10px;
     }
 
     button:hover {
@@ -84,6 +83,7 @@
         background: rgba(255,255,255,0.12);
     }
 
+    /* Bintang jatuh */
     .star {
         position: fixed;
         width: 3px;
@@ -116,8 +116,7 @@
     <input type="text" id="keterangan" placeholder="Keterangan">
     <input type="date" id="tanggal">
 
-    <button onclick="tambahData()" style="width:100%;">Simpan</button>
-    <button onclick="exportWord()" style="width:100%; background:#008cff; margin-top:10px;">Simpan ke Word</button>
+    <button onclick="tambahData()" style="width:100%; margin-top:10px;">Simpan</button>
 
     <h2 style="margin-top:30px;">Saldo Saat Ini</h2>
     <h1 id="saldo">Rp 0</h1>
@@ -138,22 +137,15 @@
 </div>
 
 <script>
-// ---- DATA DISIMPAN PERMANEN DI LOCALSTORAGE ---
-let data = JSON.parse(localStorage.getItem("keuanganData")) || [];
-let saldo = hitungSaldo();
+let data = JSON.parse(localStorage.getItem("keuangan_data")) || [];
+let saldo = parseInt(localStorage.getItem("keuangan_saldo")) || 0;
 
-// Jalankan saat halaman dibuka
-tampilkanTabel();
 updateSaldo();
+tampilkanTabel();
 
-// Hitung saldo dari data LocalStorage
-function hitungSaldo() {
-    let s = 0;
-    data.forEach(i => {
-        if (i.jenis === "pemasukan") s += i.jumlah;
-        else s -= i.jumlah;
-    });
-    return s;
+function simpanLocal() {
+    localStorage.setItem("keuangan_data", JSON.stringify(data));
+    localStorage.setItem("keuangan_saldo", saldo);
 }
 
 function updateSaldo() {
@@ -192,10 +184,10 @@ function tambahData() {
 
     data.push({ jenis, jumlah, keterangan, tanggal });
 
-    // Simpan ke LocalStorage
-    localStorage.setItem("keuanganData", JSON.stringify(data));
+    if (jenis == "pemasukan") saldo += jumlah;
+    else saldo -= jumlah;
 
-    saldo = hitungSaldo();
+    simpanLocal();
     updateSaldo();
     tampilkanTabel();
 
@@ -204,50 +196,16 @@ function tambahData() {
 }
 
 function hapusData(index) {
+    let item = data[index];
+
+    if (item.jenis == "pemasukan") saldo -= item.jumlah;
+    else saldo += item.jumlah;
+
     data.splice(index, 1);
 
-    localStorage.setItem("keuanganData", JSON.stringify(data));
-
-    saldo = hitungSaldo();
+    simpanLocal();
     updateSaldo();
     tampilkanTabel();
-}
-
-// ---- EXPORT KE WORD ----
-function exportWord() {
-    let isi = "<h2>Histori Transaksi Keuangan</h2>";
-    isi += "<table border='1' style='border-collapse:collapse;width:100%'>";
-    isi += "<tr><th>Jenis</th><th>Jumlah</th><th>Keterangan</th><th>Tanggal</th></tr>";
-
-    data.forEach(item => {
-        isi += `
-        <tr>
-            <td>${item.jenis}</td>
-            <td>${item.jumlah}</td>
-            <td>${item.keterangan}</td>
-            <td>${item.tanggal}</td>
-        </tr>`;
-    });
-
-    isi += "</table>";
-    isi += `<h3>Total Saldo: Rp ${saldo.toLocaleString()}</h3>`;
-
-    let header = `
-        <html xmlns:o='urn:schemas-microsoft-com:office:office' 
-              xmlns:w='urn:schemas-microsoft-com:office:word' 
-              xmlns='http://www.w3.org/TR/REC-html40'>
-        <head><meta charset='utf-8'></head><body>`;
-    let footer = "</body></html>";
-
-    let source = header + isi + footer;
-
-    let file = new Blob(['\ufeff', source], { type: 'application/msword' });
-
-    let url = URL.createObjectURL(file);
-    let a = document.createElement("a");
-    a.href = url;
-    a.download = "Laporan_Keuangan.doc";
-    a.click();
 }
 
 function buatBintang() {
@@ -256,6 +214,7 @@ function buatBintang() {
     star.style.left = Math.random() * window.innerWidth + "px";
     star.style.animationDuration = (1 + Math.random() * 2) + "s";
     document.body.appendChild(star);
+
     setTimeout(() => star.remove(), 3000);
 }
 
